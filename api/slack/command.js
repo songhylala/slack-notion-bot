@@ -45,3 +45,28 @@ module.exports = async (req, res) => {
 
   try {
     const content = await extractText(pageId);
+
+    const message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 300,
+      messages: [{ 
+        role: 'user', 
+        content: `다음 회사 내규를 핵심만 3개 항목으로 요약해줘:\n\n${content}` 
+      }]
+    });
+
+    const summary = message.content[0].text;
+
+    return res.json({ 
+      response_type: 'ephemeral',
+      text: `📋 *${command} 관련 안내*\n\n${summary}` 
+    });
+
+  } catch (e) {
+    console.error(e);
+    return res.json({ 
+      response_type: 'ephemeral',
+      text: `⚠️ 오류가 발생했어요. 잠시 후 다시 시도해주세요.` 
+    });
+  }
+};
