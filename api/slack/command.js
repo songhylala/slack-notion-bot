@@ -10,63 +10,67 @@ const PAGE_MAP = {
   '경조사': '여기에_노션_페이지ID_입력',
 };
 
-async function extractText(blockId, depth = 0) {
-  if (depth > 2) return '';
-  const blocks = await notion.blocks.children.list({ block_id: blockId });
-  let text = '';
-  for (const block of blocks.results) {
-    const type = block.type;
-    const richText = block[type]?.rich_text || [];
-    const line = richText.map(t => t.plain_text).join('');
+async function extractText(blockId, depth) {
+  depth = depth || 0;
+  if (depth > 1) return '';
+  var blocks = await notion.blocks.children.list({ block_id: blockId });
+  var text = '';
+  for (var i = 0; i < blocks.results.length; i++) {
+    var block = blocks.results[i];
+    var type = block.type;
+    var richText = (block[type] && block[type].rich_text) ? block[type].rich_text : [];
+    var line = richText.map(function(t) { return t.plain_text; }).join('');
     if (line) text += line + '\n';
     if (block.has_children) {
-      const child = await extractText(block.id, depth + 1);
-      text += child;
+      text += await extractText(block.id, depth + 1);
     }
   }
   return text;
 }
 
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+module.exports = async function(req, res) {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
+  }
 
-  const body = req.body;
-  const command = (body.command || '').replace('/', '').trim();
-  const response_url = body.response_url;
-
-  const pageId = PAGE_MAP[command];
+  var body = req.body;
+  var command = (body.command || '').replace('/', '').trim();
+  var response_url = body.response_url;
+  var pageId = PAGE_MAP[command];
 
   if (!pageId) {
-    return res.json({ 
-      response_type: 'ephemeral', 
-      text: `❌ 등록되지 않은 명령어예요.\n사용 가능한 명령어: ${Object.keys(PAGE_MAP).map(k => '/' + k).join(', ')}` 
+    res.json({
+      response_type: 'ephemeral',
+      text: '❌ 등록되지 않은 명령어예요.'
     });
+    return;
   }
 
   try {
-    const content = await extractText(pageId);
+    var content = await extractText(pageId);
 
-    const message = await anthropic.messages.create({
+    var message = await anthropic.messages.create({
       model: 'claude-haiku-4-5',
       max_tokens: 300,
-      messages: [{ 
-        role: 'user', 
-        content: `다음 회사 내규를 핵심만 3개 항목으로 요약해줘:\n\n${content}` 
+      messages: [{
+        role: 'user',
+        content: '다음 회사 내규를 핵심만 3개 항목으로 요약해줘:\n\n' + content
       }]
     });
 
-    const summary = message.content[0].text;
+    var summary = message.content[0].text;
 
-    return res.json({ 
+    res.json({
       response_type: 'ephemeral',
-      text: `📋 *${command} 관련 안내*\n\n${summary}` 
+      text: '📋 *' + command + ' 관련 안내*\n\n' + summary
     });
 
   } catch (e) {
     console.error(e);
-    return res.json({ 
+    res.json({
       response_type: 'ephemeral',
-      text: `⚠️ 오류가 발생했어요. 잠시 후 다시 시도해주세요.` 
+      text: '⚠️ 오류가 발생했어요. 잠시 후 다시 시도해주세요.'
     });
   }
 };
