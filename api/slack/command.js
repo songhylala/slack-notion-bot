@@ -5,7 +5,7 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const PAGE_MAP = {
-  '연차':  '여기에_노션_페이지ID_입력',
+  '연차':  '2cd3b344ce7f809f9b8ff6162605f945',
   '복지':  '여기에_노션_페이지ID_입력',
   '경조사': '여기에_노션_페이지ID_입력',
 };
