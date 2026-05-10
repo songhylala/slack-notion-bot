@@ -34,11 +34,11 @@ module.exports = async (req, res) => {
       .join('\n');
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 500,
+      model: 'claude-haiku-4-5',
+      max_tokens: 300,
       messages: [{ 
         role: 'user', 
-        content: `다음 회사 내규를 핵심만 요약해줘. 불렛포인트로 3~5개 항목으로 간결하게:\n\n${content}` 
+        content: `다음 회사 내규를 핵심만 3개 항목으로 요약해줘:\n\n${content}` 
       }]
     });
 
