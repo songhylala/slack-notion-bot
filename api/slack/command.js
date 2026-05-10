@@ -26,8 +26,6 @@ module.exports = async (req, res) => {
     });
   }
 
-  res.json({ response_type: 'ephemeral', text: `🔍 "${command}" 정보를 찾고 있어요...` });
-
   try {
     const blocks = await notion.blocks.children.list({ block_id: pageId });
     const content = blocks.results
@@ -46,23 +44,16 @@ module.exports = async (req, res) => {
 
     const summary = message.content[0].text;
 
-    await fetch(response_url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        response_type: 'ephemeral',
-        text: `📋 *${command} 관련 안내*\n\n${summary}` 
-      })
+    return res.json({ 
+      response_type: 'ephemeral',
+      text: `📋 *${command} 관련 안내*\n\n${summary}` 
     });
+
   } catch (e) {
     console.error(e);
-    await fetch(response_url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        response_type: 'ephemeral',
-        text: `⚠️ 오류가 발생했어요. 잠시 후 다시 시도해주세요.` 
-      })
+    return res.json({ 
+      response_type: 'ephemeral',
+      text: `⚠️ 오류가 발생했어요. 잠시 후 다시 시도해주세요.` 
     });
   }
 };
